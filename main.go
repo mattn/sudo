@@ -295,6 +295,7 @@ func server() int {
 		for {
 			n, err := os.Stdin.Read(b[:])
 			if err != nil {
+				// stdin was closed
 				enc.Encode(&msg{name: "close"})
 				break
 			}
