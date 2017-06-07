@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -219,7 +218,6 @@ func client(addr string) int {
 	} else {
 		code = 0
 	}
-	ioutil.WriteFile("debug.log", []byte("debug3"), 0644)
 	enc.Encode(&Message{Type: "exit", Exit: code})
 	return 0
 }
