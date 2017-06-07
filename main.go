@@ -144,10 +144,10 @@ func ShellExecuteEx(pExecInfo *SHELLEXECUTEINFO) error {
 	return errors.New(errorMsg)
 }
 
-type Message struct {
-	Type string
-	Exit int
-	Data []byte
+type msg struct {
+	name string
+	exit int
+	data []byte
 }
 
 func msgWrite(enc *gob.Encoder, typ string) io.WriteCloser {
@@ -160,7 +160,7 @@ func msgWrite(enc *gob.Encoder, typ string) io.WriteCloser {
 			if err != nil {
 				break
 			}
-			enc.Encode(&Message{Type: typ, Exit: 0, Data: b[:n]})
+			enc.Encode(&msg{name: typ, data: b[:n]})
 		}
 	}()
 	return w
@@ -196,12 +196,12 @@ func client(addr string) int {
 		defer inw.Close()
 	in_loop:
 		for {
-			var msg Message
-			err = dec.Decode(&msg)
+			var m msg
+			err = dec.Decode(&m)
 			if err != nil {
 				return
 			}
-			switch msg.Type {
+			switch m.name {
 			case "close":
 				break in_loop
 			case "ctrlc":
@@ -211,7 +211,7 @@ func client(addr string) int {
 					cmd.Process.Signal(os.Interrupt)
 				}
 			case "stdin":
-				inw.Write(msg.Data)
+				inw.Write(m.data)
 			}
 		}
 	}()
@@ -226,7 +226,7 @@ func client(addr string) int {
 	} else {
 		code = 0
 	}
-	enc.Encode(&Message{Type: "exit", Exit: code})
+	enc.Encode(&msg{name: "exit", exit: code})
 	return 0
 }
 
@@ -278,7 +278,7 @@ func server() int {
 	signal.Notify(sc, os.Interrupt)
 	go func() {
 		for range sc {
-			enc.Encode(&Message{Type: "ctrlc"})
+			enc.Encode(&msg{name: "ctrlc"})
 		}
 	}()
 	defer close(sc)
@@ -289,28 +289,28 @@ func server() int {
 		for {
 			n, err := os.Stdin.Read(b[:])
 			if err != nil {
-				enc.Encode(&Message{Type: "close"})
+				enc.Encode(&msg{name: "close"})
 				break
 			}
-			enc.Encode(&Message{Type: "stdin", Data: b[:n]})
+			enc.Encode(&msg{name: "stdin", data: b[:n]})
 		}
 	}()
 
 	dec := gob.NewDecoder(conn)
 	for {
-		var msg Message
-		err = dec.Decode(&msg)
+		var m msg
+		err = dec.Decode(&m)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "cannot execute command: %v\n", makeCmdLine(flag.Args()))
 			return 1
 		}
-		switch msg.Type {
+		switch m.name {
 		case "stdout":
-			os.Stdout.Write(msg.Data)
+			os.Stdout.Write(m.data)
 		case "stderr":
-			os.Stderr.Write(msg.Data)
+			os.Stderr.Write(m.data)
 		case "exit":
-			return msg.Exit
+			return m.exit
 		}
 	}
 	return 0
