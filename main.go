@@ -145,9 +145,10 @@ func ShellExecuteEx(pExecInfo *SHELLEXECUTEINFO) error {
 }
 
 type msg struct {
-	Name string
-	Exit int
-	Data []byte
+	Name  string
+	Exit  int
+	Error string
+	Data  []byte
 }
 
 func msgWrite(enc *gob.Encoder, typ string) io.WriteCloser {
@@ -160,7 +161,10 @@ func msgWrite(enc *gob.Encoder, typ string) io.WriteCloser {
 			if err != nil {
 				break
 			}
-			enc.Encode(&msg{Name: typ, Data: b[:n]})
+			err = enc.Encode(&msg{Name: typ, Data: b[:n]})
+			if err != nil {
+				break
+			}
 		}
 	}()
 	return w
@@ -170,10 +174,10 @@ func client(addr string) int {
 	// connect to server
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
-		return 1
+		panic(err.Error())
 	}
 	defer conn.Close()
+
 	enc, dec := gob.NewEncoder(conn), gob.NewDecoder(conn)
 
 	cmd := exec.Command(flag.Arg(0), flag.Args()[1:]...)
@@ -181,7 +185,7 @@ func client(addr string) int {
 	// stdin
 	inw, err := cmd.StdinPipe()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
+		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot execute command: %v\n", makeCmdLine(flag.Args()))})
 		return 1
 	}
 	defer inw.Close()
@@ -232,7 +236,11 @@ func client(addr string) int {
 		code = 0
 	}
 
-	enc.Encode(&msg{Name: "exit", Exit: code})
+	err = enc.Encode(&msg{Name: "exit", Exit: code})
+	if err != nil {
+		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot detect exit code: %v\n", makeCmdLine(flag.Args()))})
+		return 1
+	}
 	return 0
 }
 
@@ -299,7 +307,10 @@ func server() int {
 				enc.Encode(&msg{Name: "close"})
 				break
 			}
-			enc.Encode(&msg{Name: "stdin", Data: b[:n]})
+			err := enc.Encode(&msg{Name: "stdin", Data: b[:n]})
+			if err != nil {
+				break
+			}
 		}
 	}()
 
