@@ -145,9 +145,9 @@ func ShellExecuteEx(pExecInfo *SHELLEXECUTEINFO) error {
 }
 
 type msg struct {
-	name string
-	exit int
-	data []byte
+	Name string
+	Exit int
+	Data []byte
 }
 
 func msgWrite(enc *gob.Encoder, typ string) io.WriteCloser {
@@ -160,7 +160,7 @@ func msgWrite(enc *gob.Encoder, typ string) io.WriteCloser {
 			if err != nil {
 				break
 			}
-			enc.Encode(&msg{name: typ, data: b[:n]})
+			enc.Encode(&msg{Name: typ, Data: b[:n]})
 		}
 	}()
 	return w
@@ -205,7 +205,7 @@ func client(addr string) int {
 			if err != nil {
 				return
 			}
-			switch m.name {
+			switch m.Name {
 			case "close":
 				break in_loop
 			case "ctrlc":
@@ -216,7 +216,7 @@ func client(addr string) int {
 					cmd.Process.Signal(os.Interrupt)
 				}
 			case "stdin":
-				inw.Write(m.data)
+				inw.Write(m.Data)
 			}
 		}
 	}()
@@ -232,7 +232,7 @@ func client(addr string) int {
 		code = 0
 	}
 
-	enc.Encode(&msg{name: "exit", exit: code})
+	enc.Encode(&msg{Name: "exit", Exit: code})
 	return 0
 }
 
@@ -285,7 +285,7 @@ func server() int {
 	signal.Notify(sc, os.Interrupt)
 	go func() {
 		for range sc {
-			enc.Encode(&msg{name: "ctrlc"})
+			enc.Encode(&msg{Name: "ctrlc"})
 		}
 	}()
 	defer close(sc)
@@ -296,10 +296,10 @@ func server() int {
 			n, err := os.Stdin.Read(b[:])
 			if err != nil {
 				// stdin was closed
-				enc.Encode(&msg{name: "close"})
+				enc.Encode(&msg{Name: "close"})
 				break
 			}
-			enc.Encode(&msg{name: "stdin", data: b[:n]})
+			enc.Encode(&msg{Name: "stdin", Data: b[:n]})
 		}
 	}()
 
@@ -310,13 +310,13 @@ func server() int {
 			fmt.Fprintf(os.Stderr, "cannot execute command: %v\n", makeCmdLine(flag.Args()))
 			return 1
 		}
-		switch m.name {
+		switch m.Name {
 		case "stdout":
-			os.Stdout.Write(m.data)
+			os.Stdout.Write(m.Data)
 		case "stderr":
-			os.Stderr.Write(m.data)
+			os.Stderr.Write(m.Data)
 		case "exit":
-			return m.exit
+			return m.Exit
 		}
 	}
 	return 0
