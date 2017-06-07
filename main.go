@@ -185,7 +185,7 @@ func client(addr string) int {
 	// stdin
 	inw, err := cmd.StdinPipe()
 	if err != nil {
-		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot execute command: %v\n", makeCmdLine(flag.Args()))})
+		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot execute command: %v", makeCmdLine(flag.Args()))})
 		return 1
 	}
 	defer inw.Close()
@@ -238,7 +238,7 @@ func client(addr string) int {
 
 	err = enc.Encode(&msg{Name: "exit", Exit: code})
 	if err != nil {
-		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot detect exit code: %v\n", makeCmdLine(flag.Args()))})
+		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot detect exit code: %v", makeCmdLine(flag.Args()))})
 		return 1
 	}
 	return 0
@@ -259,7 +259,7 @@ func server() int {
 	// make listner to communicate child process
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "%v: cannot make listener\n", os.Args[0])
 		return 1
 	}
 	defer lis.Close()
@@ -267,22 +267,28 @@ func server() int {
 	// make sure executable name to avoid detecting same executable name
 	exe, err := os.Executable()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "%v: cannot find executable\n", os.Args[0])
 		return 1
 	}
 	args := []string{"-mode", lis.Addr().String()}
 	args = append(args, flag.Args()...)
 
+	var errExec error
 	go func() {
 		err = ShellExecuteAndWait(0, "runas", exe, makeCmdLine(args), "", syscall.SW_HIDE)
 		if err != nil {
+			errExec = err
 			lis.Close()
 		}
 	}()
 
 	conn, err := lis.Accept()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot execute command: %v\n", makeCmdLine(flag.Args()))
+		if errExec != nil {
+			fmt.Fprintf(os.Stderr, "%v: %v\n", os.Args[0], errExec)
+		} else {
+			fmt.Fprintf(os.Stderr, "%v: cannot execute command: %v\n", os.Args[0], makeCmdLine(flag.Args()))
+		}
 		return 1
 	}
 	defer conn.Close()
@@ -318,7 +324,7 @@ func server() int {
 		var m msg
 		err = dec.Decode(&m)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "cannot execute command: %v\n", makeCmdLine(flag.Args()))
+			fmt.Fprintf(os.Stderr, "%v: cannot execute command: %v\n", os.Args[0], makeCmdLine(flag.Args()))
 			return 1
 		}
 		switch m.Name {
