@@ -260,10 +260,9 @@ func server() int {
 	var conn net.Conn
 	go func() {
 		err = ShellExecuteAndWait(0, "runas", exe, makeCmdLine(args), "", syscall.SW_HIDE)
-		if err != nil && conn != nil {
-			conn.Close()
+		if err != nil {
+			lis.Close()
 		}
-		lis.Close()
 	}()
 
 	conn, err = lis.Accept()
