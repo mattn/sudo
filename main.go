@@ -53,7 +53,7 @@ type (
 )
 
 // SHELLEXECUTEINFO struct
-type SHELLEXECUTEINFO struct {
+type _SHELLEXECUTEINFO struct {
 	cbSize         dword
 	fMask          ulong
 	hwnd           hwnd
@@ -71,8 +71,8 @@ type SHELLEXECUTEINFO struct {
 	hProcess       syscall.Handle
 }
 
-// ShellExecuteAndWait is version of ShellExecuteEx which want process
-func ShellExecuteAndWait(hwnd hwnd, lpOperation, lpFile, lpParameters, lpDirectory string, nShowCmd int) error {
+// _ShellExecuteAndWait is version of ShellExecuteEx which want process
+func _ShellExecuteAndWait(hwnd hwnd, lpOperation, lpFile, lpParameters, lpDirectory string, nShowCmd int) error {
 	var lpctstrVerb, lpctstrParameters, lpctstrDirectory lpctstr
 	if len(lpOperation) != 0 {
 		lpctstrVerb = lpctstr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpOperation)))
@@ -83,7 +83,7 @@ func ShellExecuteAndWait(hwnd hwnd, lpOperation, lpFile, lpParameters, lpDirecto
 	if len(lpDirectory) != 0 {
 		lpctstrDirectory = lpctstr(unsafe.Pointer(syscall.StringToUTF16Ptr(lpDirectory)))
 	}
-	i := &SHELLEXECUTEINFO{
+	i := &_SHELLEXECUTEINFO{
 		fMask:        _SEE_MASK_NOCLOSEPROCESS,
 		hwnd:         hwnd,
 		lpVerb:       lpctstrVerb,
@@ -93,11 +93,11 @@ func ShellExecuteAndWait(hwnd hwnd, lpOperation, lpFile, lpParameters, lpDirecto
 		nShow:        nShowCmd,
 	}
 	i.cbSize = dword(unsafe.Sizeof(*i))
-	return ShellExecuteEx(i)
+	return _ShellExecuteEx(i)
 }
 
 // ShellExecuteEx is Windows API
-func ShellExecuteEx(pExecInfo *SHELLEXECUTEINFO) error {
+func _ShellExecuteEx(pExecInfo *_SHELLEXECUTEINFO) error {
 	ret, _, _ := procShellExecuteEx.Call(uintptr(unsafe.Pointer(pExecInfo)))
 	if ret == 1 && pExecInfo.fMask&_SEE_MASK_NOCLOSEPROCESS != 0 {
 		s, e := syscall.WaitForSingleObject(syscall.Handle(pExecInfo.hProcess), syscall.INFINITE)
@@ -277,7 +277,7 @@ func server() int {
 
 	var errExec error
 	go func() {
-		err = ShellExecuteAndWait(0, "runas", exe, makeCmdLine(args), "", syscall.SW_HIDE)
+		err = _ShellExecuteAndWait(0, "runas", exe, makeCmdLine(args), "", syscall.SW_HIDE)
 		if err != nil {
 			errExec = err
 			lis.Close()
