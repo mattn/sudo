@@ -154,7 +154,7 @@ func msgWrite(enc *gob.Encoder, typ string) io.WriteCloser {
 	r, w := io.Pipe()
 	go func() {
 		defer r.Close()
-		var b [256]byte
+		var b [4096]byte
 		for {
 			n, err := r.Read(b[:])
 			if err != nil {
