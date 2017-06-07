@@ -307,7 +307,7 @@ func server() int {
 				enc.Encode(&msg{Name: "close"})
 				break
 			}
-			err := enc.Encode(&msg{Name: "stdin", Data: b[:n]})
+			err = enc.Encode(&msg{Name: "stdin", Data: b[:n]})
 			if err != nil {
 				break
 			}
@@ -326,6 +326,8 @@ func server() int {
 			syscall.Write(syscall.Stdout, m.Data)
 		case "stderr":
 			syscall.Write(syscall.Stderr, m.Data)
+		case "error":
+			fmt.Fprintln(os.Stderr, m.Error)
 		case "exit":
 			return m.Exit
 		}
