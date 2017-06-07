@@ -9,6 +9,8 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"os/signal"
+	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -202,6 +204,12 @@ func client(addr string) int {
 			switch msg.Type {
 			case "close":
 				break in_loop
+			case "ctrlc":
+				if runtime.GOOS == "windows" {
+					cmd.Process.Kill()
+				} else {
+					cmd.Process.Signal(os.Interrupt)
+				}
 			case "stdin":
 				inw.Write(msg.Data)
 			}
@@ -268,10 +276,20 @@ func server() int {
 	}
 	defer conn.Close()
 
+	enc := gob.NewEncoder(conn)
+
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, os.Interrupt)
+	go func() {
+		for range sc {
+			enc.Encode(&Message{Type: "ctrlc"})
+		}
+	}()
+	defer close(sc)
+
 	go func() {
 		return
 		var b [256]byte
-		enc := gob.NewEncoder(conn)
 		for {
 			n, err := os.Stdin.Read(b[:])
 			if err != nil {
