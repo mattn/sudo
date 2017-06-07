@@ -260,7 +260,6 @@ func server() int {
 	args = append(args, flag.Args()...)
 
 	var conn net.Conn
-
 	go func() {
 		err = ShellExecuteAndWait(0, "runas", exe, makeCmdLine(args), "", syscall.SW_HIDE)
 		if err != nil && conn != nil {
@@ -271,7 +270,7 @@ func server() int {
 
 	conn, err = lis.Accept()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot execute command: %v\n", exe)
+		fmt.Fprintf(os.Stderr, "cannot execute command: %v\n", makeCmdLine(flag.Args()))
 		return 1
 	}
 	defer conn.Close()
@@ -305,7 +304,7 @@ func server() int {
 		var msg Message
 		err = dec.Decode(&msg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "cannot communicate child process: %v\n", err)
+			fmt.Fprintf(os.Stderr, "cannot execute command: %v\n", makeCmdLine(flag.Args()))
 			return 1
 		}
 		switch msg.Type {
