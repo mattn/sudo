@@ -234,7 +234,7 @@ func makeCmdLine(args []string) string {
 }
 
 func server() int {
-	lis, err := net.Listen("tcp", "127.0.0.1:8880")
+	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "cannot find executable: %v", os.Args[0])
 		return 1
