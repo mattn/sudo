@@ -217,10 +217,11 @@ func client(addr string) int {
 			case "ctrlc":
 				if runtime.GOOS == "windows" {
 					// windows doesn't support os.Interrupt
-					cmd.Process.Kill()
+					exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprint(cmd.Process.Pid)).Run()
 				} else {
 					cmd.Process.Signal(os.Interrupt)
 				}
+				break in_loop
 			case "stdin":
 				inw.Write(m.Data)
 			}
@@ -312,8 +313,10 @@ func server() int {
 			n, err := os.Stdin.Read(b[:])
 			if err != nil {
 				// stdin was closed
-				enc.Encode(&msg{Name: "close"})
-				break
+				if err == io.EOF {
+					enc.Encode(&msg{Name: "close"})
+				}
+				continue
 			}
 			err = enc.Encode(&msg{Name: "stdin", Data: b[:n]})
 			if err != nil {
