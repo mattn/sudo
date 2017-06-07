@@ -167,29 +167,33 @@ func msgWrite(enc *gob.Encoder, typ string) io.WriteCloser {
 }
 
 func client(addr string) int {
+	// connect to server
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
 		return 1
 	}
 	defer conn.Close()
-
-	enc := gob.NewEncoder(conn)
-	dec := gob.NewDecoder(conn)
-
-	outw := msgWrite(enc, "stdout")
-	defer outw.Close()
-	errw := msgWrite(enc, "stderr")
-	defer errw.Close()
+	enc, dec := gob.NewEncoder(conn), gob.NewDecoder(conn)
 
 	cmd := exec.Command(flag.Arg(0), flag.Args()[1:]...)
+
+	// stdin
 	inw, err := cmd.StdinPipe()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
 		return 1
 	}
 	defer inw.Close()
+
+	// stdout
+	outw := msgWrite(enc, "stdout")
+	defer outw.Close()
 	cmd.Stdout = outw
+
+	// stderr
+	errw := msgWrite(enc, "stderr")
+	defer errw.Close()
 	cmd.Stderr = errw
 
 	go func() {
@@ -206,6 +210,7 @@ func client(addr string) int {
 				break in_loop
 			case "ctrlc":
 				if runtime.GOOS == "windows" {
+					// windows doesn't support os.Interrupt
 					cmd.Process.Kill()
 				} else {
 					cmd.Process.Signal(os.Interrupt)
@@ -226,6 +231,7 @@ func client(addr string) int {
 	} else {
 		code = 0
 	}
+
 	enc.Encode(&msg{name: "exit", exit: code})
 	return 0
 }
@@ -242,6 +248,7 @@ func makeCmdLine(args []string) string {
 }
 
 func server() int {
+	// make listner to communicate child process
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
@@ -249,6 +256,7 @@ func server() int {
 	}
 	defer lis.Close()
 
+	// make sure executable name to avoid detecting same executable name
 	exe, err := os.Executable()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
@@ -257,7 +265,6 @@ func server() int {
 	args := []string{"-mode", lis.Addr().String()}
 	args = append(args, flag.Args()...)
 
-	var conn net.Conn
 	go func() {
 		err = ShellExecuteAndWait(0, "runas", exe, makeCmdLine(args), "", syscall.SW_HIDE)
 		if err != nil {
@@ -265,14 +272,14 @@ func server() int {
 		}
 	}()
 
-	conn, err = lis.Accept()
+	conn, err := lis.Accept()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot execute command: %v\n", makeCmdLine(flag.Args()))
 		return 1
 	}
 	defer conn.Close()
 
-	enc := gob.NewEncoder(conn)
+	enc, dec := gob.NewEncoder(conn), gob.NewDecoder(conn)
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, os.Interrupt)
@@ -296,7 +303,6 @@ func server() int {
 		}
 	}()
 
-	dec := gob.NewDecoder(conn)
 	for {
 		var m msg
 		err = dec.Decode(&m)
