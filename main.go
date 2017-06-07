@@ -249,8 +249,6 @@ func server() int {
 	}
 	defer lis.Close()
 
-	os.Setenv("GO-SUDO", lis.Addr().String())
-
 	exe, err := os.Executable()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
