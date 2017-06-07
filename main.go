@@ -291,7 +291,6 @@ func server() int {
 	defer close(sc)
 
 	go func() {
-		return
 		var b [256]byte
 		for {
 			n, err := os.Stdin.Read(b[:])
