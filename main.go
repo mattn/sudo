@@ -312,9 +312,9 @@ func server() int {
 		}
 		switch m.Name {
 		case "stdout":
-			os.Stdout.Write(m.Data)
+			syscall.Write(syscall.Stdout, m.Data)
 		case "stderr":
-			os.Stderr.Write(m.Data)
+			syscall.Write(syscall.Stderr, m.Data)
 		case "exit":
 			return m.Exit
 		}
