@@ -167,7 +167,7 @@ func msgWrite(enc *gob.Encoder, typ string) io.WriteCloser {
 func client(addr string) int {
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "cannot find executable: %v", os.Args[0])
+		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
 		return 1
 	}
 	defer conn.Close()
@@ -183,7 +183,7 @@ func client(addr string) int {
 	cmd := exec.Command(flag.Arg(0), flag.Args()[1:]...)
 	inw, err := cmd.StdinPipe()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "cannot find executable: %v", os.Args[0])
+		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
 		return 1
 	}
 	defer inw.Close()
@@ -236,7 +236,7 @@ func makeCmdLine(args []string) string {
 func server() int {
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "cannot find executable: %v", os.Args[0])
+		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
 		return 1
 	}
 	defer lis.Close()
@@ -245,7 +245,7 @@ func server() int {
 
 	exe, err := os.Executable()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "cannot find executable: %v", os.Args[0])
+		fmt.Fprintf(os.Stderr, "cannot find executable: %v\n", os.Args[0])
 		return 1
 	}
 	args := []string{"-mode", lis.Addr().String()}
@@ -263,7 +263,7 @@ func server() int {
 
 	conn, err = lis.Accept()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "cannot execute command: %v", exe)
+		fmt.Fprintf(os.Stderr, "cannot execute command: %v\n", exe)
 		return 1
 	}
 	defer conn.Close()
@@ -287,7 +287,7 @@ func server() int {
 		var msg Message
 		err = dec.Decode(&msg)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "cannot communicate child process: %v", err)
+			fmt.Fprintf(os.Stderr, "cannot communicate child process: %v\n", err)
 			return 1
 		}
 		switch msg.Type {
