@@ -11,8 +11,13 @@ func main() {
 	var mode string
 	flag.StringVar(&mode, "mode", "", "mode")
 	flag.Parse()
+
+	args := flag.Args()
 	if mode != "" {
-		os.Exit(client(mode))
+		os.Exit(client(mode, args))
 	}
-	os.Exit(server())
+	if flag.NArg() == 0 {
+		args = []string{"cmd", "/c", "start"}
+	}
+	os.Exit(server(args))
 }

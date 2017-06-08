@@ -4,7 +4,6 @@ package main
 
 import (
 	"encoding/gob"
-	"flag"
 	"fmt"
 	"io"
 	"net"
@@ -13,7 +12,7 @@ import (
 	"syscall"
 )
 
-func server() int {
+func server(args []string) int {
 	// make listener to communicate child process
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -28,12 +27,12 @@ func server() int {
 		fmt.Fprintf(os.Stderr, "%v: cannot find executable\n", os.Args[0])
 		return 1
 	}
-	args := []string{"-mode", lis.Addr().String()}
-	args = append(args, flag.Args()...)
+	cmdargs := []string{"-mode", lis.Addr().String()}
+	cmdargs = append(cmdargs, args...)
 
 	var errExec error
 	go func() {
-		err = _ShellExecuteAndWait(0, "runas", exe, makeCmdLine(args), "", syscall.SW_HIDE)
+		err = _ShellExecuteAndWait(0, "runas", exe, makeCmdLine(cmdargs), "", syscall.SW_HIDE)
 		if err != nil {
 			errExec = err
 			lis.Close()
@@ -45,13 +44,23 @@ func server() int {
 		if errExec != nil {
 			fmt.Fprintf(os.Stderr, "%v: %v\n", os.Args[0], errExec)
 		} else {
-			fmt.Fprintf(os.Stderr, "%v: cannot execute command: %v\n", os.Args[0], makeCmdLine(flag.Args()))
+			fmt.Fprintf(os.Stderr, "%v: cannot execute command: %v\n", os.Args[0], makeCmdLine(args))
 		}
 		return 1
 	}
 	defer conn.Close()
 
 	enc, dec := gob.NewEncoder(conn), gob.NewDecoder(conn)
+
+	err = enc.Encode(os.Environ())
+	if err != nil {
+		if errExec != nil {
+			fmt.Fprintf(os.Stderr, "%v: %v\n", os.Args[0], errExec)
+		} else {
+			fmt.Fprintf(os.Stderr, "%v: cannot execute command: %v\n", os.Args[0], makeCmdLine(args))
+		}
+		return 1
+	}
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, os.Interrupt)
@@ -84,7 +93,7 @@ func server() int {
 		var m msg
 		err = dec.Decode(&m)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v: cannot execute command: %v\n", os.Args[0], makeCmdLine(flag.Args()))
+			fmt.Fprintf(os.Stderr, "%v: cannot execute command: %v\n", os.Args[0], makeCmdLine(args))
 			return 1
 		}
 		switch m.Name {

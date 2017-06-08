@@ -4,7 +4,6 @@ package main
 
 import (
 	"encoding/gob"
-	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -13,7 +12,7 @@ import (
 	"syscall"
 )
 
-func client(addr string) int {
+func client(addr string, args []string) int {
 	// connect to server
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
@@ -23,12 +22,12 @@ func client(addr string) int {
 
 	enc, dec := gob.NewEncoder(conn), gob.NewDecoder(conn)
 
-	cmd := exec.Command(flag.Arg(0), flag.Args()[1:]...)
+	cmd := exec.Command(args[0], args[1:]...)
 
 	// stdin
 	inw, err := cmd.StdinPipe()
 	if err != nil {
-		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot execute command: %v", makeCmdLine(flag.Args()))})
+		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot execute command: %v", makeCmdLine(args))})
 		return 1
 	}
 	defer inw.Close()
@@ -69,6 +68,14 @@ func client(addr string) int {
 		}
 	}()
 
+	var environ []string
+	err = dec.Decode(&environ)
+	if err != nil {
+		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot execute command: %v", makeCmdLine(args))})
+		return 1
+	}
+	cmd.Env = environ
+
 	err = cmd.Run()
 
 	code := 1
@@ -82,7 +89,7 @@ func client(addr string) int {
 
 	err = enc.Encode(&msg{Name: "exit", Exit: code})
 	if err != nil {
-		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot detect exit code: %v", makeCmdLine(flag.Args()))})
+		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot detect exit code: %v", makeCmdLine(args))})
 		return 1
 	}
 	return 0
