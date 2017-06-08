@@ -259,7 +259,7 @@ func makeCmdLine(args []string) string {
 }
 
 func server() int {
-	// make listner to communicate child process
+	// make listener to communicate child process
 	lis, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v: cannot make listener\n", os.Args[0])
