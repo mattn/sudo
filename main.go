@@ -18,11 +18,14 @@ func main() {
 	if mode != "" {
 		os.Exit(client(mode, args))
 	}
+	if spawn {
+		if flag.NArg() == 0 {
+			args = []string{"cmd"}
+		}
+		os.Exit(start(args))
+	}
 	if flag.NArg() == 0 {
 		args = []string{"cmd", "/c", "start"}
-	}
-	if spawn {
-		os.Exit(start(args))
 	}
 	os.Exit(server(args))
 }
