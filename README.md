@@ -19,7 +19,7 @@ sudo type secret-file.txt > accessible-file.txt
 ### Pipe from/to stream
 
 ```
-echo 123 | sudo my-command.exe | less
+echo 123 | sudo my-command.exe | more
 ```
 
 ### Change IP address
