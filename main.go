@@ -9,7 +9,9 @@ import (
 
 func main() {
 	var mode string
+	var spawn bool
 	flag.StringVar(&mode, "mode", "", "mode")
+	flag.BoolVar(&spawn, "spawn", false, "spawn")
 	flag.Parse()
 
 	args := flag.Args()
@@ -18,6 +20,9 @@ func main() {
 	}
 	if flag.NArg() == 0 {
 		args = []string{"cmd", "/c", "start"}
+	}
+	if spawn {
+		os.Exit(start(args))
 	}
 	os.Exit(server(args))
 }
