@@ -3,7 +3,7 @@
 ## Usage
 
 ```
-C:\>sudo dir
+C:\>sudo cmd /c dir
 ```
 
 Then, you'll see the UAC dialog.
