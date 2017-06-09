@@ -13,7 +13,7 @@ Then, you'll see the UAC dialog.
 ### Display contents of file which can't access from you
 
 ```
-sudo type secret-file.txt > accessible-file.txt
+sudo cmd /c type secret-file.txt > accessible-file.txt
 ```
 
 ### Pipe from/to stream
