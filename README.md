@@ -8,6 +8,38 @@ C:\>sudo cmd /c dir
 
 Then, you'll see the UAC dialog.
 
+## Tutorials
+
+### Display contents of file which can't access from you
+
+```
+sudo type secret-file.txt > accessible-file.txt
+```
+
+### Pipe from/to stream
+
+```
+echo 123 | sudo my-command.exe | less
+```
+
+### Change IP address
+
+```
+sudo netsh interface ip add address "Local Area Connection" 33.33.33.33 255.255.255.255
+```
+
+### Edit hosts file
+
+```
+sudo notepad c:\windows\system32\drivers\etc\hosts
+```
+
+### Create admin's console
+
+```
+sudo
+```
+
 ## Installation
 
 ```
