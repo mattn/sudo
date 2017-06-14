@@ -53,7 +53,7 @@ func client(addr string, args []string) int {
 			}
 			switch m.Name {
 			case "close":
-				break in_loop
+				inw.Close()
 			case "ctrlc":
 				if runtime.GOOS == "windows" {
 					// windows doesn't support os.Interrupt
