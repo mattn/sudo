@@ -46,6 +46,8 @@ sudo
 go get github.com/mattn/sudo
 ```
 
+requirement go1.8 or later.
+
 ## License
 
 MIT
