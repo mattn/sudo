@@ -12,7 +12,7 @@ install:
   - go version
   - go env
 build_script:
-  - go builx
+  - go build
 test_script:
 - go test -short ./...
 #deploy:
