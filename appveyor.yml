@@ -14,7 +14,9 @@ install:
 build_script:
   - go build
 test_script:
-- go test -short ./...
+  - go test -short ./...
+before_deploy:
+  - 7z a sudo-x86_64.zip sudo.exe
 deploy:
   release: $(appveyor_repo_tag_name)
   provider: GitHub
