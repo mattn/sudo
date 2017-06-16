@@ -48,6 +48,8 @@ go get github.com/mattn/sudo
 
 requirement go1.8 or later.
 
+Or download from [release](https://github.com/mattn/sudo/releases) tab.
+
 ## License
 
 MIT
