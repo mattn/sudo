@@ -15,16 +15,16 @@ build_script:
   - go build
 test_script:
 - go test -short ./...
-#deploy:
-#  release: $(appveyor_repo_tag_name)
-#  provider: GitHub
-#  auth_token:
-#    secure: 
-#  artifact: sudo
-#  appveyor_repo_tag: true
-#  force_update: true
-#  on:
-#    appveyor_repo_tag: true
-#artifacts:
-#  - path: sudo.exe
-#    name: sudo
+deploy:
+  release: $(appveyor_repo_tag_name)
+  provider: GitHub
+  auth_token:
+    secure: jGncCyk0IXl0B/JrIhl6GYkHKXta/FnIiyLX2bUOeq/4UyiKbkvPN1T+4R79wiKJ
+  artifact: sudo
+  appveyor_repo_tag: true
+  force_update: true
+  on:
+    appveyor_repo_tag: true
+artifacts:
+  - path: sudo-x86_64.zip
+    name: sudo
