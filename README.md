@@ -1,4 +1,8 @@
-# sudo for windows
+# sudo
+
+sudo for windows
+
+[![Build status](https://ci.appveyor.com/api/projects/status/xyxiefgm9giyags3?svg=true)](https://ci.appveyor.com/project/mattn/sudo)
 
 ## Usage
 
