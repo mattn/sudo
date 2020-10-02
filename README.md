@@ -12,9 +12,9 @@ C:\>sudo cmd /c dir
 
 Then, you'll see the UAC dialog.
 
-## Tutorials
+## Tutorials/education
 
-### Display contents of file which can't access from you
+### Display contents of file which can't access from you desktop
 
 ```
 sudo cmd /c type secret-file.txt > accessible-file.txt
