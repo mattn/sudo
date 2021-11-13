@@ -47,7 +47,7 @@ sudo
 ## Installation
 
 ```
-go get github.com/mattn/sudo
+go install github.com/mattn/sudo@latest
 ```
 
 requirement go1.8 or later.
