@@ -31,22 +31,26 @@ func server(args []string) int {
 	cmdargs := []string{"-mode", lis.Addr().String()}
 	cmdargs = append(cmdargs, args...)
 
-	var errExec error
+	errc := make(chan error, 1)
 	go func() {
-		err = _ShellExecuteAndWait(0, "runas", exe, makeCmdLine(cmdargs), "", syscall.SW_HIDE)
-		if err != nil {
-			errExec = err
+		if err := _ShellExecuteAndWait(0, "runas", exe, makeCmdLine(cmdargs), "", syscall.SW_HIDE); err != nil {
+			errc <- err
 			lis.Close()
 		}
 	}()
 
-	conn, err := lis.Accept()
-	if err != nil {
-		if errExec != nil {
+	reportErr := func() {
+		select {
+		case errExec := <-errc:
 			fmt.Fprintf(os.Stderr, "%v: %v\n", os.Args[0], errExec)
-		} else {
+		default:
 			fmt.Fprintf(os.Stderr, "%v: cannot execute command: %v\n", os.Args[0], makeCmdLine(args))
 		}
+	}
+
+	conn, err := lis.Accept()
+	if err != nil {
+		reportErr()
 		return 1
 	}
 	defer conn.Close()
@@ -55,11 +59,7 @@ func server(args []string) int {
 
 	err = enc.Encode(os.Environ())
 	if err != nil {
-		if errExec != nil {
-			fmt.Fprintf(os.Stderr, "%v: %v\n", os.Args[0], errExec)
-		} else {
-			fmt.Fprintf(os.Stderr, "%v: cannot execute command: %v\n", os.Args[0], makeCmdLine(args))
-		}
+		reportErr()
 		return 1
 	}
 
