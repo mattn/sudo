@@ -70,7 +70,10 @@ func server(args []string) int {
 			enc.Encode(&msg{Name: "ctrlc"})
 		}
 	}()
-	defer close(sc)
+	defer func() {
+		signal.Stop(sc)
+		close(sc)
+	}()
 
 	go func() {
 		var b [256]byte
