@@ -21,7 +21,7 @@ func client(addr string, args []string) int {
 	}
 	defer conn.Close()
 
-	enc, dec := gob.NewEncoder(conn), gob.NewDecoder(conn)
+	enc, dec := newMsgEncoder(conn), gob.NewDecoder(conn)
 
 	cmd := exec.Command(args[0], args[1:]...)
 

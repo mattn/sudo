@@ -10,7 +10,7 @@ func TestMsgWrite(t *testing.T) {
 	tests := []string{"foo", "bar", "baz"}
 
 	pr, pw := io.Pipe()
-	wc := msgWrite(gob.NewEncoder(pw), "test")
+	wc := msgWrite(newMsgEncoder(pw), "test")
 
 	go func() {
 		for _, test := range tests {
