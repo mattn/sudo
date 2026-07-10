@@ -63,6 +63,9 @@ func client(addr string, args []string) int {
 			case "close":
 				inw.Close()
 			case "ctrlc":
+				if cmd.Process == nil {
+					continue
+				}
 				if runtime.GOOS == "windows" {
 					// windows doesn't support os.Interrupt
 					exec.Command("taskkill", "/F", "/T", "/PID", fmt.Sprint(cmd.Process.Pid)).Run()
