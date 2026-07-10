@@ -43,13 +43,20 @@ func client(addr string, args []string) int {
 	defer errw.Close()
 	cmd.Stderr = errw
 
+	var environ []string
+	err = dec.Decode(&environ)
+	if err != nil {
+		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot execute command: %v", makeCmdLine(args))})
+		return 1
+	}
+	cmd.Env = environ
+
 	go func() {
 		defer inw.Close()
 	in_loop:
 		for {
 			var m msg
-			err = dec.Decode(&m)
-			if err != nil {
+			if err := dec.Decode(&m); err != nil {
 				return
 			}
 			switch m.Name {
@@ -68,14 +75,6 @@ func client(addr string, args []string) int {
 			}
 		}
 	}()
-
-	var environ []string
-	err = dec.Decode(&environ)
-	if err != nil {
-		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot execute command: %v", makeCmdLine(args))})
-		return 1
-	}
-	cmd.Env = environ
 
 	err = cmd.Run()
 
