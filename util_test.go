@@ -1,35 +1,32 @@
 package main
 
 import (
-	"bytes"
 	"encoding/gob"
 	"io"
 	"testing"
 )
 
 func TestMsgWrite(t *testing.T) {
-	var err error
-	var buf bytes.Buffer
-
 	tests := []string{"foo", "bar", "baz"}
 
-	wc := msgWrite(gob.NewEncoder(&buf), "test")
+	pr, pw := io.Pipe()
+	wc := msgWrite(gob.NewEncoder(pw), "test")
 
-	for _, test := range tests {
-		if _, err = wc.Write([]byte(test)); err != nil {
-			t.Fatal(err)
+	go func() {
+		for _, test := range tests {
+			if _, err := wc.Write([]byte(test)); err != nil {
+				pw.CloseWithError(err)
+				return
+			}
 		}
-	}
+		wc.Close()
+	}()
 
-	dec := gob.NewDecoder(&buf)
+	dec := gob.NewDecoder(pr)
 
 	for _, test := range tests {
 		var m msg
-		err = dec.Decode(&m)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
+		if err := dec.Decode(&m); err != nil {
 			t.Fatal(err)
 		}
 		if m.Name != "test" {
