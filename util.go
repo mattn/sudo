@@ -35,9 +35,30 @@ func (e *msgEncoder) Encode(v interface{}) error {
 	return e.enc.Encode(v)
 }
 
+// msgWriter is an io.WriteCloser whose Close blocks until every byte written
+// has been encoded, so callers can flush all output before sending a final
+// message such as the exit code.
+type msgWriter struct {
+	w    *io.PipeWriter
+	done chan struct{}
+	once sync.Once
+}
+
+func (mw *msgWriter) Write(p []byte) (int, error) {
+	return mw.w.Write(p)
+}
+
+func (mw *msgWriter) Close() error {
+	err := mw.w.Close()
+	mw.once.Do(func() { <-mw.done })
+	return err
+}
+
 func msgWrite(enc *msgEncoder, typ string) io.WriteCloser {
 	r, w := io.Pipe()
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		defer r.Close()
 		var b [4096]byte
 		for {
@@ -51,7 +72,7 @@ func msgWrite(enc *msgEncoder, typ string) io.WriteCloser {
 			}
 		}
 	}()
-	return w
+	return &msgWriter{w: w, done: done}
 }
 
 func makeCmdLine(args []string) string {

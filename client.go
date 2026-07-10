@@ -90,6 +90,10 @@ func client(addr string, args []string) int {
 		code = 0
 	}
 
+	// flush any buffered stdout/stderr before reporting the exit code
+	outw.Close()
+	errw.Close()
+
 	err = enc.Encode(&msg{Name: "exit", Exit: code})
 	if err != nil {
 		enc.Encode(&msg{Name: "error", Error: fmt.Sprintf("cannot detect exit code: %v", makeCmdLine(args))})
