@@ -55,7 +55,7 @@ func server(args []string) int {
 	}
 	defer conn.Close()
 
-	enc, dec := gob.NewEncoder(conn), gob.NewDecoder(conn)
+	enc, dec := newMsgEncoder(conn), gob.NewDecoder(conn)
 
 	err = enc.Encode(os.Environ())
 	if err != nil {
