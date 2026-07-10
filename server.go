@@ -81,7 +81,7 @@ func server(args []string) int {
 				if err == io.EOF {
 					enc.Encode(&msg{Name: "close"})
 				}
-				continue
+				break
 			}
 			err = enc.Encode(&msg{Name: "stdin", Data: b[:n]})
 			if err != nil {
